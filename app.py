@@ -18,11 +18,20 @@ from pydantic import BaseModel
 from auth import create_access_token, verify_token
 from users import authenticate_user
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.middleware.cors import CORSMiddleware
 
 # force rebuild
 setup_logging()  # attiva il logging
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # permette richieste da qualsiasi origine
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Modello per il login JSON
 class LoginRequest(BaseModel):
