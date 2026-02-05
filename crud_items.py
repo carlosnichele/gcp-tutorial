@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -29,9 +29,13 @@ async def create_item(item: ItemCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/items", response_model=list[ItemRead])
-async def list_items( skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db) ):
+async def list_items(
+        skip: int = Query(0, ge=0),
+        limit: int = Query(10, ge=1, le=100),
+        db: AsyncSession = Depends(get_db) ):
     result = await db.execute( select(ItemModel).offset(skip).limit(limit) )
     return result.scalars().all()
+
 
 
 @router.get("/items/{item_id}", response_model=ItemRead)
