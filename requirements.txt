@@ -4,3 +4,6 @@ sqlalchemy
 asyncpg
 pydantic
 psutil
+python-jose
+passlib[bcrypt]
+
