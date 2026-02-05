@@ -18,14 +18,6 @@ from fastapi.security import OAuth2PasswordRequestForm
 from auth import create_access_token
 from users import authenticate_user
 
-@app.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(form_data.username, form_data.password)
-    if not user:
-       raise HTTPException(status_code=401, detail="Invalid credentials")
-       token = create_access_token({"sub": user["username"]})
-       return {"access_token": token, "token_type": "bearer"}
-
 setup_logging() # attiva il logging
 
 app = FastAPI()
@@ -35,6 +27,14 @@ async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         return {"status": "tables created"}
+
+@app.post("/login")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+       raise HTTPException(status_code=401, detail="Invalid credentials")
+       token = create_access_token({"sub": user["username"]})
+       return {"access_token": token, "token_type": "bearer"}
 
 app.include_router(items_router)
 
