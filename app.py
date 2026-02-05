@@ -11,6 +11,8 @@ import string
 import hashlib
 from datetime import datetime, timezone
 from crud_items import router as items_router
+from database import engine
+from models import Base
 
 app = FastAPI()
 
@@ -36,6 +38,11 @@ def root():
         "version": "1.0.0"
     }
 
+@app.get("/create-tables")
+async def create_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        return {"status": "tables created"}
 
 @app.get("/health")
 def health():
