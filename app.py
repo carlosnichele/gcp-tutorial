@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi import FastAPI, Request, HTTPException
 import os
 import platform
 import psutil
@@ -14,28 +14,37 @@ from crud_items import router as items_router
 from database import engine
 from models import Base
 from logging_config import setup_logging
-from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel
 from auth import create_access_token
 from users import authenticate_user
 
 # force rebuild
-setup_logging() # attiva il logging
+setup_logging()  # attiva il logging
 
 app = FastAPI()
+
+# Modello per il login JSON
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
 
 @app.get("/create-tables")
 async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        return {"status": "tables created"}
+    return {"status": "tables created"}
+
 
 @app.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(form_data.username, form_data.password)
+async def login(data: LoginRequest):
+    user = authenticate_user(data.username, data.password)
     if not user:
-       raise HTTPException(status_code=401, detail="Invalid credentials")
-       token = create_access_token({"sub": user["username"]})
-       return {"access_token": token, "token_type": "bearer"}
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = create_access_token({"sub": user["username"]})
+    return {"access_token": token, "token_type": "bearer"}
+
 
 app.include_router(items_router)
 
@@ -59,6 +68,7 @@ def root():
         "version": "1.0.0"
     }
 
+
 @app.get("/health")
 def health():
     return {"status": "healthy"}
@@ -68,16 +78,13 @@ def health():
 def info(request: Request):
     start = time.time()
 
-    # System info
     cpu_count = os.cpu_count()
     memory = psutil.virtual_memory()
     load_avg = os.getloadavg() if hasattr(os, "getloadavg") else (0, 0, 0)
 
-    # Network info
     hostname = socket.gethostname()
     ip_address = socket.gethostbyname(hostname)
 
-    # Railway environment variables
     railway_info = {
         "environment": os.getenv("RAILWAY_ENVIRONMENT", "unknown"),
         "deployment_id": os.getenv("RAILWAY_DEPLOYMENT_ID", "unknown"),
@@ -88,7 +95,6 @@ def info(request: Request):
         "commit_sha": os.getenv("RAILWAY_GIT_COMMIT_SHA", "unknown"),
     }
 
-    # App info
     app_info = {
         "name": "FastAPI on Railway",
         "version": "1.0.0",
@@ -101,7 +107,6 @@ def info(request: Request):
         "uptime": get_uptime(),
     }
 
-    # System resources
     system_info = {
         "cpu_count": cpu_count,
         "load_average": {
@@ -114,7 +119,6 @@ def info(request: Request):
         "memory_usage_percent": memory.percent,
     }
 
-    # Installed packages (best effort)
     try:
         import pkg_resources
         packages = sorted([str(p).split()[0] for p in pkg_resources.working_set])
