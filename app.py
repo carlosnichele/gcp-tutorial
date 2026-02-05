@@ -16,6 +16,12 @@ from models import Base
 
 app = FastAPI()
 
+@app.get("/create-tables")
+async def create_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        return {"status": "tables created"}
+
 app.include_router(items_router)
 
 START_TIME = time.time()
@@ -37,12 +43,6 @@ def root():
         "status": "ok",
         "version": "1.0.0"
     }
-
-@app.get("/create-tables")
-async def create_tables():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        return {"status": "tables created"}
 
 @app.get("/health")
 def health():
