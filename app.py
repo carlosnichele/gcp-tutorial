@@ -18,6 +18,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from auth import create_access_token
 from users import authenticate_user
 
+# force rebuild
 setup_logging() # attiva il logging
 
 app = FastAPI()
