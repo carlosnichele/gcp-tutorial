@@ -10,8 +10,11 @@ import random
 import string
 import hashlib
 from datetime import datetime, timezone
+from crud_items import router as items_router
 
 app = FastAPI()
+
+app.include_router(items_router)
 
 START_TIME = time.time()
 
