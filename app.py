@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends, HTTPException
 import os
 import platform
 import psutil
@@ -14,6 +14,17 @@ from crud_items import router as items_router
 from database import engine
 from models import Base
 from logging_config import setup_logging
+from fastapi.security import OAuth2PasswordRequestForm
+from auth import create_access_token
+from users import authenticate_user
+
+@app.post("/login")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+       raise HTTPException(status_code=401, detail="Invalid credentials")
+       token = create_access_token({"sub": user["username"]})
+       return {"access_token": token, "token_type": "bearer"}
 
 setup_logging() # attiva il logging
 

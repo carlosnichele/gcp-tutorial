@@ -1,12 +1,28 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from fastapi.security import OAuth2PasswordBearer
+from jose import jwt, JWTError
+from auth import SECRET_KEY, ALGORITHM
 
 from database import get_db
 from models import Item as ItemModel
 from schemas import ItemCreate, ItemRead
 
 import logging
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return username
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 
 logger = logging.getLogger("items")
 
@@ -29,10 +45,10 @@ async def create_item(item: ItemCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/items", response_model=list[ItemRead])
-async def list_items(
-        skip: int = Query(0, ge=0),
-        limit: int = Query(10, ge=1, le=100),
-        db: AsyncSession = Depends(get_db) ):
+async def list_items( skip: int = 0,
+                      limit: int = 10,
+                      db: AsyncSession = Depends(get_db),
+                      user: str = Depends(get_current_user) ):
     result = await db.execute( select(ItemModel).offset(skip).limit(limit) )
     return result.scalars().all()
 
