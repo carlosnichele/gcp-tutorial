@@ -46,6 +46,9 @@ async def get_item(item_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.put("/items/{item_id}", response_model=ItemRead)
 async def update_item(item_id: int, item: ItemCreate, db: AsyncSession = Depends(get_db)):
+    if item_id != item.id:
+        raise HTTPException(status_code=400, detail="ID mismatch")
+
     db_item = await db.get(ItemModel, item_id)
     if not db_item:
         raise HTTPException(status_code=404, detail="Item not found")
