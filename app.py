@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Depends
 import os
 import platform
 import psutil
@@ -15,8 +15,9 @@ from database import engine
 from models import Base
 from logging_config import setup_logging
 from pydantic import BaseModel
-from auth import create_access_token
+from auth import create_access_token, verify_token
 from users import authenticate_user
+from fastapi.security import OAuth2PasswordBearer
 
 # force rebuild
 setup_logging()  # attiva il logging
@@ -27,6 +28,9 @@ app = FastAPI()
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+# Gestore OAuth2 per estrarre il token
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 @app.get("/create-tables")
@@ -44,6 +48,13 @@ async def login(data: LoginRequest):
 
     token = create_access_token({"sub": user["username"]})
     return {"access_token": token, "token_type": "bearer"}
+
+
+# 🔐 ENDPOINT PROTETTO
+@app.get("/me")
+async def me(token: str = Depends(oauth2_scheme)):
+    payload = verify_token(token)
+    return {"user": payload["sub"]}
 
 
 app.include_router(items_router)
