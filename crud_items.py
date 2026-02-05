@@ -29,8 +29,8 @@ async def create_item(item: ItemCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/items", response_model=list[ItemRead])
-async def list_items(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(ItemModel))
+async def list_items( skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db) ):
+    result = await db.execute( select(ItemModel).offset(skip).limit(limit) )
     return result.scalars().all()
 
 
