@@ -1,10 +1,15 @@
-from flask import Flask
+from fastapi import FastAPI
 
-app = Flask(__name__)
+app = FastAPI()
 
 @app.get("/")
-def home():
-    return {"status": "ok", "message": "Cloud Run funziona!"}
+def root():
+    return {
+        "message": "Hello from Railway!",
+        "status": "ok",
+        "version": "1.0.0"
+    }
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
