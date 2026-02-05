@@ -13,6 +13,9 @@ from datetime import datetime, timezone
 from crud_items import router as items_router
 from database import engine
 from models import Base
+from logging_config import setup_logging
+
+setup_logging() # attiva il logging
 
 app = FastAPI()
 

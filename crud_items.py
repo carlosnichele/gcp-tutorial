@@ -6,18 +6,25 @@ from database import get_db
 from models import Item as ItemModel
 from schemas import ItemCreate, ItemRead
 
+import logging
+
+logger = logging.getLogger("items")
+
 router = APIRouter()
 
 @router.post("/items", response_model=ItemRead)
 async def create_item(item: ItemCreate, db: AsyncSession = Depends(get_db)):
+    logger.info(f"Creating item with id={item.id}")
     existing = await db.get(ItemModel, item.id)
     if existing:
+        logger.warning(f"Item {item.id} already exists")
         raise HTTPException(status_code=400, detail="Item already exists")
 
     new_item = ItemModel(**item.dict())
     db.add(new_item)
     await db.commit()
     await db.refresh(new_item)
+    logger.info(f"Item {item.id} created successfully")
     return new_item
 
 
@@ -29,8 +36,10 @@ async def list_items(db: AsyncSession = Depends(get_db)):
 
 @router.get("/items/{item_id}", response_model=ItemRead)
 async def get_item(item_id: int, db: AsyncSession = Depends(get_db)):
+    logger.info(f"Fetching item {item_id}")
     item = await db.get(ItemModel, item_id)
     if not item:
+        logger.error(f"Item {item_id} not found")
         raise HTTPException(status_code=404, detail="Item not found")
     return item
 
