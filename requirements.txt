@@ -4,10 +4,7 @@ sqlalchemy
 asyncpg
 pydantic
 psutil
-python-jose
-passlib[bcrypt]
+python-multipart
 bcrypt==4.1.2
 passlib[bcrypt]==1.7.4
 python-jose==3.3.0
-
-
